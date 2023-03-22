@@ -98,12 +98,11 @@ def shortest_path(source, target):
     """
 
     shortestPath = []
-    sourcesMovies = getSourcesMovies(source)
 
     initialState = (None, source)
     startNode = Node(initialState, None, actions(initialState))
     frontier = QueueFrontier()
-    explored = set()
+    explored = []
 
     currentNode = startNode
     frontier.add(currentNode)
@@ -113,17 +112,27 @@ def shortest_path(source, target):
         if frontier.empty():
             return None
 
-        # printFrontier(frontier)
-
-        if goal(currentNode, target):
-            print("Found end")
-            return None  # TODO: implement returning the solution
-
-        explored.add(currentNode)
         currentNode = frontier.remove()
 
+        if goal(currentNode, target):
+            movieName = movies[currentNode.state[0]]["title"]
+            currentNode = frontier.remove()
+
+            while currentNode.state != initialState:
+                # (movieName, actor/actress) is the value to append
+                movieName = movies[currentNode.state[0]]["title"]
+
+                star = people[currentNode.action]["name"]
+                shortest_path.append((movieName, star))
+
+                currentNode = currentNode.parent
+
+            shortest_path.reverse()
+            return shortest_path
+
+            return True  # TODO: implement returning the solution
+
         nextActions = actions(currentNode.state)
-        print(nextActions)
 
         for action in nextActions:
             node = Node(
@@ -132,12 +141,10 @@ def shortest_path(source, target):
                 action
             )
 
-            if node not in explored and not frontier.contains_state(node.state):
+            if node.state not in explored and not frontier.contains_state(node.state):
                 frontier.add(node)
-            else:
-                print("already in explored")
 
-    return None
+        explored.append(currentNode.state)
 
 
 # If the first item in the tuple is the target, we're done
@@ -154,7 +161,9 @@ def actions(state):
     if state[0] is not None:
         stars = movies[state[0]]["stars"]
         for star in stars:
-            nextActions += getSourcesMovies(star)
+            starsMovies = getSourcesMovies(star)
+            for movie in starsMovies:
+                nextActions += (star, movie)
     else:
         nextActions = getSourcesMovies(state[1])
 
