@@ -115,22 +115,7 @@ def shortest_path(source, target):
         currentNode = frontier.remove()
 
         if goal(currentNode, target):
-
-            movieName = currentNode.state[0]
-            star = target
-            shortestPath.append((movieName, star))
-
-            while currentNode.parent != None:
-                star = currentNode.action[0]
-                currentNode = currentNode.parent
-                movieName = currentNode.state[0]
-
-                # (movieName, actor/actress) is the value to append
-                shortestPath.append((movieName, star))
-
-            shortestPath.reverse()
-            shortestPath = shortestPath[1:]
-            return shortestPath
+            returnSolution(currentNode, target)
 
         nextActions = actions(currentNode.state)
 
@@ -140,6 +125,9 @@ def shortest_path(source, target):
                 currentNode,
                 action
             )
+
+            if goal(node, target):
+                return returnSolution(node, target)
 
             if node.state not in explored and not frontier.contains_state(node.state):
                 frontier.add(node)
@@ -154,7 +142,27 @@ def goal(node, target):
     return False
 
 
-# Returns all the next possible actions (which movie-cast node to explore)
+def returnSolution(currentNode, target):
+    shortestPath = []
+    movieName = currentNode.state[0]
+    star = target
+    shortestPath.append((movieName, star))
+
+    while currentNode.parent != None:
+        star = currentNode.action[0]
+        currentNode = currentNode.parent
+        movieName = currentNode.state[0]
+
+        # (movieName, actor/actress) is the value to append
+        shortestPath.append((movieName, star))
+
+    shortestPath.reverse()
+    shortestPath = shortestPath[1:]
+    return shortestPath
+
+    # Returns all the next possible actions (which movie-cast node to explore)
+
+
 def actions(state):
     nextActions = []
 
