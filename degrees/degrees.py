@@ -115,22 +115,22 @@ def shortest_path(source, target):
         currentNode = frontier.remove()
 
         if goal(currentNode, target):
-            movieName = movies[currentNode.state[0]]["title"]
-            currentNode = frontier.remove()
 
-            while currentNode.state != initialState:
-                # (movieName, actor/actress) is the value to append
-                movieName = movies[currentNode.state[0]]["title"]
+            movieName = currentNode.state[0]
+            star = target
+            shortestPath.append((movieName, star))
 
-                star = people[currentNode.action]["name"]
-                shortest_path.append((movieName, star))
-
+            while currentNode.parent != None:
+                star = currentNode.action[0]
                 currentNode = currentNode.parent
+                movieName = currentNode.state[0]
 
-            shortest_path.reverse()
-            return shortest_path
+                # (movieName, actor/actress) is the value to append
+                shortestPath.append((movieName, star))
 
-            return True  # TODO: implement returning the solution
+            shortestPath.reverse()
+            shortestPath = shortestPath[1:]
+            return shortestPath
 
         nextActions = actions(currentNode.state)
 
@@ -163,9 +163,11 @@ def actions(state):
         for star in stars:
             starsMovies = getSourcesMovies(star)
             for movie in starsMovies:
-                nextActions += (star, movie)
+                nextActions.append((star, movie))
     else:
-        nextActions = getSourcesMovies(state[1])
+        starsMovies = getSourcesMovies(state[1])
+        for movie in starsMovies:
+            nextActions.append((state[1], movie))
 
     nextActions = set(nextActions)
     return nextActions
@@ -173,7 +175,8 @@ def actions(state):
 
 # Returns the resulting state (a movie and its cast) based on which movie was chosen (the previous action)
 def results(state, action):
-    newStateMovie = action      # "action" represents the movie we chose to explore
+    # "action" represents the movie we chose to explore
+    newStateMovie = action[1]
     newMovieCast = movies[newStateMovie]["stars"]
     newState = (newStateMovie, newMovieCast)
     return newState
