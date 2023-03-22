@@ -3,6 +3,8 @@ import sys
 
 from util import Node, StackFrontier, QueueFrontier
 
+# Tom Cruise (a few good men) -> Kevin Bacon (apollo 13) -> gary sinise
+
 # Maps names to a set of corresponding person_ids
 names = {}
 
@@ -61,7 +63,6 @@ def main():
     print("Loading data...")
     load_data(directory)
     print("Data loaded.")
-    print(movies)
     source = person_id_for_name(input("Name: "))
     if source is None:
         sys.exit("Person not found.")
@@ -90,28 +91,83 @@ def shortest_path(source, target):
     that connect the source to the target.
 
     If no possible path, returns None.
+
+    STATE: A movie and its various actors
+    ACTION: Move to a movie from one of those actors
+
     """
 
     shortestPath = []
-    sourcesMovies = set()
+    sourcesMovies = getSourcesMovies(source)
 
-    for movie in movies:
-        if source in movies[movie]["stars"]:
-            sourcesMovies.add(movie)
+    initialState = (None, source)
+    startNode = Node(initialState, None, actions(initialState))
+    frontier = QueueFrontier()
+    explored = set()
 
-    initialState = (source, sourcesMovies)
-    startNode = Node()
-    frontier = StackFrontier()
+    currentNode = startNode
+    frontier.add(currentNode)
 
-    print(sourcesMovies)
+    while True:
+        # If there's no solution, return None
+        if frontier.empty():
+            return None
+
+        # printFrontier(frontier)
+
+        if goal(currentNode, target):
+            print("Found end")
+            return None  # TODO: implement returning the solution
+
+        explored.add(currentNode)
+        currentNode = frontier.remove()
+
+        nextActions = actions(currentNode.state)
+        print(nextActions)
+
+        for action in nextActions:
+            node = Node(
+                results(currentNode.state, action),
+                currentNode,
+                action
+            )
+
+            if node not in explored and not frontier.contains_state(node.state):
+                frontier.add(node)
+            else:
+                print("already in explored")
 
     return None
 
 
+# If the first item in the tuple is the target, we're done
 def goal(node, target):
-    if (node.state[1] == target):
+    if target in node.state[1]:
         return True
     return False
+
+
+# Returns all the next possible actions (which movie-cast node to explore)
+def actions(state):
+    nextActions = []
+
+    if state[0] is not None:
+        stars = movies[state[0]]["stars"]
+        for star in stars:
+            nextActions += getSourcesMovies(star)
+    else:
+        nextActions = getSourcesMovies(state[1])
+
+    nextActions = set(nextActions)
+    return nextActions
+
+
+# Returns the resulting state (a movie and its cast) based on which movie was chosen (the previous action)
+def results(state, action):
+    newStateMovie = action      # "action" represents the movie we chose to explore
+    newMovieCast = movies[newStateMovie]["stars"]
+    newState = (newStateMovie, newMovieCast)
+    return newState
 
 
 def person_id_for_name(name):
@@ -151,6 +207,25 @@ def neighbors_for_person(person_id):
         for person_id in movies[movie_id]["stars"]:
             neighbors.add((movie_id, person_id))
     return neighbors
+
+
+def getSourcesMovies(source):
+    sourcesMovies = []
+    for movie in movies:
+        if source in movies[movie]["stars"]:
+            sourcesMovies.append(movie)
+
+    return sourcesMovies
+
+
+def printFrontier(frontier):
+    i = len(frontier.frontier) - 1
+    print("TOP of STACK")
+    while i != -1:
+        print(f"[{frontier.frontier[i]}]")
+        i -= 1
+
+    print("BOTTOM of STACK")
 
 
 if __name__ == "__main__":
