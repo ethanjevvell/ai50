@@ -1,59 +1,13 @@
-"""
-Tic Tac Toe Player
-"""
-
-import math
 import sys
 import copy
 
+EMPTY = None
 X = "X"
 O = "O"
-EMPTY = None
 
-
-def initial_state():
-    """
-    Returns starting state of the board.
-    """
-    return [[EMPTY, EMPTY, EMPTY],
-            [EMPTY, EMPTY, EMPTY],
-            [EMPTY, EMPTY, EMPTY]]
-
-
-def player(board):
-    """
-    Returns player who has the next turn on a board.
-
-    Logic:  If the number of empty slots % 2 == 1, it is player X's turn
-            If the number of empty slots % 2 == 0, it is player O's turn
-    """
-    emptySlots = countEmptySlots(board)
-
-    if emptySlots % 2 == 0:
-        return O
-
-    return X
-
-
-def actions(board):
-    """
-    Returns set of all possible actions (i, j) available on the board.
-    Logic: If the slot is EMPTY, it is a possible action
-    """
-
-    possibleActions = []
-    i = 0
-    j = 0
-
-    while i < 3:
-        while j < 3:
-            if board[i][j] == EMPTY:
-                possibleActions.append((i, j))
-            j += 1
-        i += 1
-        j = 0
-
-    return possibleActions
+board = [[EMPTY, EMPTY, EMPTY],
+         [EMPTY, EMPTY, EMPTY],
+         [EMPTY, EMPTY, EMPTY]]
 
 
 def result(board, action):
@@ -67,6 +21,31 @@ def result(board, action):
 
     boardCopy[action[0]][action[1]] = player(board)
     return boardCopy
+
+
+def player(board):
+    """
+    Returns player who has the next turn on a board.
+
+    Logic:  If the number of empty slots % 2 == 1, it is player X's turn
+            If the number of empty slots % 2 == 0, it is player O's turn
+    """
+    emptySlots = 0
+
+    for row in board:
+        for item in row:
+            if item == EMPTY:
+                emptySlots += 1
+
+    if emptySlots % 2 == 0:
+        return O
+
+    return X
+
+
+def printBoard(board):
+    for row in board:
+        print(row)
 
 
 def winner(board):
@@ -108,6 +87,8 @@ def terminal(board):
     Returns True if game is over, False otherwise.
     True if 1) There is a WINNER (will have to call winner function) or
             2) The board is full
+
+    then call winner() again!
     """
 
     if winner(board) is not None:
@@ -117,31 +98,6 @@ def terminal(board):
         return True
 
     return False
-
-
-def utility(board):
-    """
-    Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
-    """
-
-    if winner(board) == X:
-        return 1
-    elif winner(board) == O:
-        return -1
-
-    return 0
-
-
-def minimax(board):
-    """
-    Returns the optimal action for the current player on the board.
-    """
-    raise NotImplementedError
-
-
-def printBoard(board):
-    for row in board:
-        print(row)
 
 
 def countEmptySlots(board):
@@ -154,9 +110,4 @@ def countEmptySlots(board):
     return emptySlots
 
 
-def min(board):
-    return None
-
-
-def max(board):
-    return None
+print(terminal(board))
