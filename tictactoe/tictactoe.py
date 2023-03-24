@@ -136,7 +136,34 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    raise NotImplementedError
+    currentPlayer = player(board)
+    possibleActions = actions(board)
+
+    if currentPlayer == X:
+        valueOfMoves = {action: maxValue(result(board, action))
+                        for action in possibleActions}
+
+        bestAction = (possibleActions[0])
+        bestActionVal = valueOfMoves[bestAction]
+
+        for action in possibleActions:
+            if valueOfMoves[action] >= bestActionVal:
+                bestAction = action
+                bestActionVal = valueOfMoves[action]
+
+        return bestAction
+
+    valueOfMoves = {action: minValue(result(board, action))
+                    for action in possibleActions}
+    bestAction = (possibleActions[0])
+    bestActionVal = valueOfMoves[bestAction]
+
+    for action in possibleActions:
+        if valueOfMoves[action] <= bestActionVal:
+            bestAction = action
+            bestActionVal = valueOfMoves[action]
+
+    return bestAction
 
 
 def printBoard(board):
@@ -154,9 +181,29 @@ def countEmptySlots(board):
     return emptySlots
 
 
-def min(board):
-    return None
+def maxValue(board):
+    # X aims to maximize score
+    if terminal(board):
+        return utility(board)
+
+    v = -1 * math.inf
+
+    nextActions = actions(board)
+    for action in nextActions:
+        v = minValue(result(board, action))
+
+    return v
 
 
-def max(board):
-    return None
+def minValue(board):
+    # O aims to minimize score
+    if terminal(board):
+        return utility(board)
+
+    v = math.inf
+
+    nextActions = actions(board)
+    for action in nextActions:
+        v = maxValue(result(board, action))
+
+    return v

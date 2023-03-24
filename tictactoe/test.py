@@ -108,6 +108,3 @@ def countEmptySlots(board):
                 emptySlots += 1
 
     return emptySlots
-
-
-print(terminal(board))
