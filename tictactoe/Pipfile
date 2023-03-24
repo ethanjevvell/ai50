@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pygame = "*"
+submit50 = "*"
 
 [dev-packages]
 autopep8 = "*"
