@@ -113,7 +113,7 @@ def terminal(board):
     if winner(board) is not None:
         return True
 
-    if countEmptySlots == 0:
+    if countEmptySlots(board) == 0:
         return True
 
     return False
@@ -139,31 +139,13 @@ def minimax(board):
     currentPlayer = player(board)
     possibleActions = actions(board)
 
+    if terminal(board):
+        return None
+
     if currentPlayer == X:
-        valueOfMoves = {action: maxValue(result(board, action))
-                        for action in possibleActions}
+        return maxValue(board)[0]
 
-        bestAction = (possibleActions[0])
-        bestActionVal = valueOfMoves[bestAction]
-
-        for action in possibleActions:
-            if valueOfMoves[action] >= bestActionVal:
-                bestAction = action
-                bestActionVal = valueOfMoves[action]
-
-        return bestAction
-
-    valueOfMoves = {action: minValue(result(board, action))
-                    for action in possibleActions}
-    bestAction = (possibleActions[0])
-    bestActionVal = valueOfMoves[bestAction]
-
-    for action in possibleActions:
-        if valueOfMoves[action] <= bestActionVal:
-            bestAction = action
-            bestActionVal = valueOfMoves[action]
-
-    return bestAction
+    return minValue(board)[0]
 
 
 def printBoard(board):
@@ -184,26 +166,32 @@ def countEmptySlots(board):
 def maxValue(board):
     # X aims to maximize score
     if terminal(board):
-        return utility(board)
+        return (None, utility(board))
 
     v = -1 * math.inf
+    bestAction = ()
 
-    nextActions = actions(board)
-    for action in nextActions:
-        v = minValue(result(board, action))
+    for action in actions(board):
+        maxVal = minValue(result(board, action))[1]
+        if maxVal > v:
+            v = maxVal
+            bestAction = action
 
-    return v
+    return (bestAction, v)
 
 
 def minValue(board):
     # O aims to minimize score
     if terminal(board):
-        return utility(board)
+        return (None, utility(board))
 
     v = math.inf
+    bestAction = ()
 
-    nextActions = actions(board)
-    for action in nextActions:
-        v = maxValue(result(board, action))
+    for action in actions(board):
+        minVal = maxValue(result(board, action))[1]
+        if minVal < v:
+            v = minVal
+            bestAction = action
 
-    return v
+    return (bestAction, v)
