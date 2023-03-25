@@ -257,8 +257,11 @@ class MinesweeperAI():
         possibleMoves = [
             cell for cell in self.board_cells if cell not in self.mines and cell not in self.moves_made]
 
-        r = random.randint(0, len(possibleMoves) - 1)
-        return possibleMoves[r]
+        if possibleMoves != []:
+            r = random.randint(0, len(possibleMoves) - 1)
+            return possibleMoves[r]
+
+        return None
 
     def cell_and_surrounding(self, cell):
         i, j = cell[0], cell[1]
