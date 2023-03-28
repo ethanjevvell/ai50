@@ -52,17 +52,18 @@ def transition_model(corpus, page, damping_factor):
 
     pages = corpus[page]
 
+    # If there are no links on the target page, the surfer is likely to end up anywhere in the corpus with equal probability
     if not pages:
         probability = 1 / len(corpus)
         return {page: probability for page in corpus}
 
-    initProbability = 1 / len(pages)
-    probabilities = {p: (initProbability * damping_factor) for p in pages}
+    uniform_probability = (1 - damping_factor) / len(corpus)
+    initial_probability = (1 / len(pages))
+
+    probabilities = {p: (initial_probability * damping_factor) for p in pages}
     probabilities[page] = 0
 
-    dampProbability = (1 - sum(probabilities.values())) / len(probabilities)
-
-    return {p: probabilities[p] + dampProbability for p in probabilities}
+    return {p: probabilities[p] + uniform_probability for p in probabilities}
 
 
 def sample_pagerank(corpus, damping_factor, n):
