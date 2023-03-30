@@ -129,16 +129,6 @@ def powerset(s):
 
 
 def joint_probability(people, one_gene, two_genes, have_trait):
-    """
-    Compute and return a joint probability.
-
-    The probability returned should be the probability that
-        * everyone in set `one_gene` has one copy of the gene, and
-        * everyone in set `two_genes` has two copies of the gene, and
-        * everyone not in `one_gene` or `two_gene` does not have the gene, and
-        * everyone in set `have_trait` has the trait, and
-        * everyone not in set` have_trait` does not have the trait.
-    """
 
     # Establish universal probabilities per person per scenario
     one_gene_dict =     {p: PROBS["gene"][1] for p in one_gene}
@@ -207,7 +197,18 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
+    for person in probabilities:
+        if person in one_gene:
+            probabilities[person]["gene"][1]        += p
+        if person in two_genes:
+            probabilities[person]["gene"][2]        += p
+        if person not in one_gene and person not in two_genes:
+            probabilities[person]["gene"][0]        += p
+        if person in have_trait:
+            probabilities[person]["trait"][True]    += p
+        if person not in have_trait:
+            probabilities[person]["trait"][False]   += p
+
 
 
 def normalize(probabilities):
