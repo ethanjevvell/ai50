@@ -131,27 +131,47 @@ def powerset(s):
 def joint_probability(people, one_gene, two_genes, have_trait):
 
     # Establish universal probabilities per person per scenario
-    one_gene_dict =     {p: PROBS["gene"][1] for p in one_gene}
-    two_gene_dict =     {p: PROBS["gene"][2] for p in two_genes}
-    zero_gene_dict =    {p: PROBS["gene"][0] for p in people if p not in one_gene and p not in two_genes}
-    have_trait_dict =   {p: PROBS["trait"][True] for p in people in have_trait}
-    no_trait_dict =     {p: PROBS["trait"][False] for p in people if p not in have_trait}
-    gene_trait_dicts =  [one_gene_dict, two_gene_dict, zero_gene_dict, have_trait_dict, no_trait_dict]
+    one_gene_dict   = {p: PROBS["gene"][1] for p in one_gene}
+    two_gene_dict   = {p: PROBS["gene"][2] for p in two_genes}
+    zero_gene_dict  = {p: PROBS["gene"][0] for p in people if p not in one_gene and p not in two_genes}
+    has_trait_dict  = {}
+    no_trait_dict   = {}
 
+    for p in people:
+        has_one_gene    = p in one_gene
+        has_two_genes   = p in two_genes
+        has_zero_genes  = p not in one_gene and p not in two_genes
+        has_trait       = p in have_trait
+        no_trait        = p not in have_trait
+
+        if has_one_gene and has_trait:
+            has_trait_dict[p]   = PROBS["trait"][1][True]
+        if has_two_genes and has_trait:
+            has_trait_dict[p]   = PROBS["trait"][2][True]
+        if has_zero_genes and has_trait:
+            has_trait_dict[p]   = PROBS["trait"][0][True]
+        if has_one_gene and no_trait:
+            no_trait_dict[p]    = PROBS["trait"][1][False]
+        if has_two_genes and no_trait:
+            no_trait_dict[p]    = PROBS["trait"][2][False]
+        if has_zero_genes and no_trait:
+            no_trait_dict[p]    = PROBS["trait"][0][False]
+
+    gene_trait_dicts =  [one_gene_dict, two_gene_dict, zero_gene_dict, has_trait_dict, no_trait_dict]
     final_prob_dict = {p: 1 for p in people}
 
     # Calculate the joint probability for those without parents (the roots of the network)
     for p in people:
         for dict in gene_trait_dicts:
-            if p in dict and not hasParents(p):
+            if p in dict and not hasParents(people, p):
                 final_prob_dict[p] *= dict[p]
 
     for p in people:
-        if hasParents(p):
+        if hasParents(people, p):
             p_mother = people[p]["mother"]
             p_father = people[p]["father"]
-            mother_genes = numOfParentGenes(p_mother)
-            father_genes = numOfParentGenes(p_father)
+            mother_genes = numOfParentGenes(p_mother, one_gene, two_genes)
+            father_genes = numOfParentGenes(p_father, one_gene, two_genes)
 
             if p in list(one_gene_dict.keys()):
                 # P(one gene | child) = P(gene passed from mom, but not dad) + P(gene passed from dad, but not mom); (XOR)
@@ -165,6 +185,10 @@ def joint_probability(people, one_gene, two_genes, have_trait):
             if p in list(zero_gene_dict.keys()):
                 # P(no genes | child) = P(gene NOT passed from mom) * P(gene NOT passed from dad)
                 final_prob_dict[p] *= ((1 - probParentPassesGene(mother_genes)) * (1 - probParentPassesGene(father_genes)))
+
+        for dict in [has_trait_dict, no_trait_dict]:
+            if p in dict:
+                final_prob_dict[p] *= dict[p]
 
     joint_prob = 1
     for p in final_prob_dict:
@@ -210,13 +234,21 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
             probabilities[person]["trait"][False]   += p
 
 
-
 def normalize(probabilities):
     """
-    Update `probabilities` such that each probability distribution
-    is normalized (i.e., sums to 1, with relative proportions the same).
+    Normalize the probability distributions for each person in `probabilities`.
     """
-    raise NotImplementedError
+    for person in probabilities:
+        # Normalize gene distribution
+        gene_sum = sum(probabilities[person]["gene"].values())
+        for gene_copy in probabilities[person]["gene"]:
+            probabilities[person]["gene"][gene_copy] /= gene_sum
+
+        # Normalize trait distribution
+        trait_sum = sum(probabilities[person]["trait"].values())
+        for trait in probabilities[person]["trait"]:
+            probabilities[person]["trait"][trait] /= trait_sum
+
 
 
 if __name__ == "__main__":
