@@ -130,89 +130,48 @@ def powerset(s):
 
 def joint_probability(people, one_gene, two_genes, have_trait):
 
-    # Establish universal probabilities per person per scenario
-    one_gene_dict   = {p: PROBS["gene"][1] for p in one_gene}
-    two_gene_dict   = {p: PROBS["gene"][2] for p in two_genes}
-    zero_gene_dict  = {p: PROBS["gene"][0] for p in people if p not in one_gene and p not in two_genes}
-    has_trait_dict  = {}
-    no_trait_dict   = {}
+    j_prob = 1
 
     for p in people:
-        has_one_gene    = p in one_gene
-        has_two_genes   = p in two_genes
-        has_zero_genes  = p not in one_gene and p not in two_genes
-        has_trait       = p in have_trait
-        no_trait        = p not in have_trait
 
-        if has_one_gene and has_trait:
-            has_trait_dict[p]   = PROBS["trait"][1][True]
-        if has_two_genes and has_trait:
-            has_trait_dict[p]   = PROBS["trait"][2][True]
-        if has_zero_genes and has_trait:
-            has_trait_dict[p]   = PROBS["trait"][0][True]
-        if has_one_gene and no_trait:
-            no_trait_dict[p]    = PROBS["trait"][1][False]
-        if has_two_genes and no_trait:
-            no_trait_dict[p]    = PROBS["trait"][2][False]
-        if has_zero_genes and no_trait:
-            no_trait_dict[p]    = PROBS["trait"][0][False]
+        p_prob = 1
+        p_genes = (2 if p in two_genes else 1 if p in one_gene else 0)
+        p_trait = p in have_trait
 
-    gene_trait_dicts =  [one_gene_dict, two_gene_dict, zero_gene_dict, has_trait_dict, no_trait_dict]
-    final_prob_dict = {p: 1 for p in people}
+        p_mother = people[p]["mother"]
+        p_father = people[p]["father"]
 
-    # Calculate the joint probability for those without parents (the roots of the network)
-    for p in people:
-        for dict in gene_trait_dicts:
-            if p in dict and not hasParents(people, p):
-                final_prob_dict[p] *= dict[p]
+        if not p_father and not p_mother:
+            p_prob *= PROBS["gene"][p_genes]
 
-    for p in people:
-        if hasParents(people, p):
-            p_mother = people[p]["mother"]
-            p_father = people[p]["father"]
-            mother_genes = numOfParentGenes(p_mother, one_gene, two_genes)
-            father_genes = numOfParentGenes(p_father, one_gene, two_genes)
+        else:
+            mother_prob = probParentPassesGene(p_mother, one_gene, two_genes)
+            father_prob = probParentPassesGene(p_father, one_gene, two_genes)
 
-            if p in list(one_gene_dict.keys()):
-                # P(one gene | child) = P(gene passed from mom, but not dad) + P(gene passed from dad, but not mom); (XOR)
-                final_prob_dict[p] *= ((probParentPassesGene(mother_genes) * (1 - probParentPassesGene(father_genes)))
-                                        + (probParentPassesGene(father_genes) * (1 - probParentPassesGene(mother_genes))))
+            # P(one gene | child) = P(gene passed from mom, but not dad) + P(gene passed from dad, but not mom); (XOR)
+            if p_genes == 1:
+                p_prob *= ((mother_prob * (1 - father_prob)) + (father_prob * (1 - mother_prob)))
 
-            if p in list(two_gene_dict.keys()):
-                # P(two genes | child) = P(gene passed from mom) * P(gene passed from dad)
-                final_prob_dict[p] *= (probParentPassesGene(mother_genes) * probParentPassesGene(father_genes))
+            # P(two genes | child) = P(gene passed from mom) * P(gene passed from dad)
+            elif p_genes == 2:
+                p_prob *= mother_prob * father_prob
 
-            if p in list(zero_gene_dict.keys()):
-                # P(no genes | child) = P(gene NOT passed from mom) * P(gene NOT passed from dad)
-                final_prob_dict[p] *= ((1 - probParentPassesGene(mother_genes)) * (1 - probParentPassesGene(father_genes)))
+            # P(no genes | child) = P(gene NOT passed from mom) * P(gene NOT passed from dad)
+            else:
+                p_prob *= (1 - mother_prob) * (1 - father_prob)
 
-        for dict in [has_trait_dict, no_trait_dict]:
-            if p in dict:
-                final_prob_dict[p] *= dict[p]
+        # Now we need to account for a person p with 0, 1, or 2 genes having or not having the trait
+        p_prob *= PROBS["trait"][p_genes][p_trait]
+        j_prob *= p_prob
 
-    joint_prob = 1
-    for p in final_prob_dict:
-        joint_prob *= final_prob_dict[p]
+    return j_prob
 
-    return joint_prob
-
-def hasParents(people, p):
-    return people[p]["mother"] and people[p]["father"]
-
-def probParentPassesGene(num_of_genes):
-    if num_of_genes == 0:
-        return PROBS["mutation"]
-    if num_of_genes == 1:
-        return 0.5 * (1 - PROBS["mutation"]) + (0.5 * PROBS["mutation"])
-    if num_of_genes == 2:
-        return 1 - PROBS["mutation"]
-
-def numOfParentGenes(parent, one_gene, two_genes):
+def probParentPassesGene(parent, one_gene, two_genes):
     if parent in one_gene:
-        return 1
+        return 0.5
     if parent in two_genes:
-        return 2
-    return 0
+        return 1 - PROBS["mutation"]
+    return PROBS["mutation"]
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
     """
@@ -239,16 +198,15 @@ def normalize(probabilities):
     Normalize the probability distributions for each person in `probabilities`.
     """
     for person in probabilities:
+
         # Normalize gene distribution
         gene_sum = sum(probabilities[person]["gene"].values())
-        for gene_copy in probabilities[person]["gene"]:
-            probabilities[person]["gene"][gene_copy] /= gene_sum
-
-        # Normalize trait distribution
         trait_sum = sum(probabilities[person]["trait"].values())
-        for trait in probabilities[person]["trait"]:
-            probabilities[person]["trait"][trait] /= trait_sum
+        gene_alpha = 1 / gene_sum
+        trait_alpha = 1 / trait_sum
 
+        probabilities[person]["gene"] = {gene: (gene_alpha * gene_prob) for gene, gene_prob in probabilities[person]["gene"].items()}
+        probabilities[person]["trait"] = {trait: (trait_alpha * trait_prob) for trait, trait_prob in probabilities[person]["trait"].items()}
 
 
 if __name__ == "__main__":
