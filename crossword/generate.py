@@ -1,6 +1,7 @@
 import sys
 from collections import deque
 from crossword import *
+import copy
 
 
 class CrosswordCreator():
@@ -101,12 +102,13 @@ class CrosswordCreator():
 
     def revise(self, x, y):
         revised = False
+        x_domain = copy.deepcopy(self.domains[y])
 
         overlap = self.crossword.overlaps[x, y]
         if not overlap:
             return revised
 
-        for word1 in self.domains[x]:
+        for word1 in x_domain:
             satisfactoryDomain = [
                 word2 for word2 in self.domains[y] if word1[overlap[0]] == word2[overlap[1]]]
 
@@ -166,34 +168,35 @@ class CrosswordCreator():
         return True
 
     def order_domain_values(self, var, assignment):
-        """
-        Return a list of values in the domain of `var`, in order by
-        the number of values they rule out for neighboring variables.
-        The first value in the list, for example, should be the one
-        that rules out the fewest values among the neighbors of `var`.
-        """
-        raise NotImplementedError
+        # TODO: Add heuristic
+        return self.domains(var)
 
     def select_unassigned_variable(self, assignment):
-        """
-        Return an unassigned variable not already part of `assignment`.
-        Choose the variable with the minimum number of remaining values
-        in its domain. If there is a tie, choose the variable with the highest
-        degree. If there is a tie, any of the tied variables are acceptable
-        return values.
-        """
-        raise NotImplementedError
+        # TODO: Add heuristic
+        all_vars = set(self.domains.keys())
+        assigned_vars = set(assignment.keys())
+        remaining_vars = all_vars - assigned_vars
+        return list(remaining_vars)[0]
 
     def backtrack(self, assignment):
-        """
-        Using Backtracking Search, take as input a partial assignment for the
-        crossword and return a complete assignment if possible to do so.
 
-        `assignment` is a mapping from variables (keys) to words (values).
+        if self.assignment_complete(assignment):
+            return assignment
 
-        If no assignment is possible, return None.
-        """
-        raise NotImplementedError
+        var = self.select_unassigned_variable(assignment)
+
+        for value in self.order_domain_values(var, assignment):
+            assignment[var] = value
+
+            if self.consistent(assignment):
+                result = self.backtrack(assignment)
+
+                if result:
+                    return result
+            else:
+                assignment[var] = None
+
+        return None
 
 
 def main():
