@@ -161,6 +161,8 @@ class CrosswordCreator():
                     return False
 
         for var in assignment:
+            if assignment[var] is None:
+                continue
             neighbors = self.crossword.neighbors(var)
             for neighbor in neighbors:
                 overlap = self.crossword.overlaps[var, neighbor]
@@ -170,17 +172,36 @@ class CrosswordCreator():
 
         return True
 
-
     def order_domain_values(self, var, assignment):
-        # TODO: Add heuristic
-        return self.domains[var]
+
+        neighbors = self.crossword.neighbors(var)
+        cost_dict = {word: 0 for word in self.domains[var]}
+
+        for word in cost_dict:
+            cost = 0
+            for neighbor in neighbors:
+                if word in self.domains[neighbor]:
+                    cost += 1
+            cost_dict[word] += 1
+
+        return sorted(cost_dict, key=cost_dict.get)
 
     def select_unassigned_variable(self, assignment):
-        # TODO: Add heuristic
+
         all_vars = set(self.domains.keys())
         assigned_vars = set(assignment.keys())
         remaining_vars = all_vars - assigned_vars
-        return list(remaining_vars)[0]
+
+        domain_lengths = {var: len(self.domains[var]) for var in remaining_vars}
+        min_length_domain = min(domain_lengths.values())
+        min_keys = [var for var, value in domain_lengths.items() if value == min_length_domain]
+
+        if len(min_keys) == 1:
+            return min_keys[0]
+
+        neighbor_count = {var: len(self.crossword.neighbors(var)) for var in min_keys}
+        return max(neighbor_count, key=neighbor_count.get)
+
 
     def backtrack(self, assignment):
         if self.assignment_complete(assignment):
@@ -189,18 +210,16 @@ class CrosswordCreator():
         var = self.select_unassigned_variable(assignment)
 
         for value in self.order_domain_values(var, assignment):
-            assignment[var] = value
+            new_assignment = assignment.copy()
+            new_assignment[var] = value
 
-            if self.consistent(assignment):
-                result = self.backtrack(assignment)
+            if self.consistent(new_assignment):
+                result = self.backtrack(new_assignment)
 
                 if result:
                     return result
-            else:
-                assignment[var] = None
 
         return None
-
 
 def main():
 
