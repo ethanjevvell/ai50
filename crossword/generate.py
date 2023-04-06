@@ -141,33 +141,35 @@ class CrosswordCreator():
         return True
 
     def assignment_complete(self, assignment):
-        if (not len(assignment.keys()) == len(self.domains.keys())) or any(len(assignment[key] > 1) for key in assignment):
+
+        if len(assignment.keys()) != len(self.crossword.variables):
             return False
+
+        if any(assignment[key] is None for key in assignment):
+            return False
+
         return True
 
     def consistent(self, assignment):
-        """
-        Return True if `assignment` is consistent (i.e., words fit in crossword
-        puzzle without conflicting characters); return False otherwise.
-        """
-
-        # If a word is repeated at any point, the length of the word_set will be less than the length of
-        # the assignment dict
         word_set = set(assignment.values())
         if len(word_set) != len(assignment):
             return False
 
-        if any(len(assignment[var]) != var.length for var in assignment):
-            return False
+        for var in assignment:
+            if assignment[var]:
+                if len(assignment[var]) != var.length:
+                    return False
 
         for var in assignment:
             neighbors = self.crossword.neighbors(var)
             for neighbor in neighbors:
                 overlap = self.crossword.overlaps[var, neighbor]
-                if not (str(self.domains[var])[overlap[0]] == str(self.domains[neighbor])[overlap[1]]):
-                    return False
+                if neighbor in assignment and assignment[var] and assignment[neighbor]:  # Check if the neighbor has an assignment
+                    if not (assignment[var][overlap[0]] == assignment[neighbor][overlap[1]]):
+                        return False
 
         return True
+
 
     def order_domain_values(self, var, assignment):
         # TODO: Add heuristic
@@ -181,7 +183,6 @@ class CrosswordCreator():
         return list(remaining_vars)[0]
 
     def backtrack(self, assignment):
-
         if self.assignment_complete(assignment):
             return assignment
 
