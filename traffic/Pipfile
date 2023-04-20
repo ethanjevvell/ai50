@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+opencv-python = "*"
+scikit-learn = "*"
+numpy = "*"
+nvidia-cudnn-cu11 = "==8.6.0.163"
+tensorflow = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
