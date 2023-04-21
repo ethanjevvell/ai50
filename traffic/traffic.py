@@ -68,10 +68,10 @@ def get_model():
 
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(
-        32, (3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+            20, (3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
         tf.keras.layers.Flatten(input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
-        tf.keras.layers.Dense(512, activation="relu"),
-        tf.keras.layers.Dense(512, activation="relu"),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(256, activation="relu"),
         tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
     ])
