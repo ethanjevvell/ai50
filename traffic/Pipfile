@@ -9,6 +9,7 @@ scikit-learn = "*"
 numpy = "*"
 nvidia-cudnn-cu11 = "==8.6.0.163"
 tensorflow = "*"
+submit50 = "*"
 
 [dev-packages]
 autopep8 = "*"
