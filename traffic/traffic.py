@@ -66,6 +66,7 @@ def load_data(data_dir):
 
 def get_model():
 
+    # Model construction
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(
             32, (5, 5), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
