@@ -23,15 +23,15 @@ S -> S Conj S
 S -> S Conj VP
 S -> S Adv | Adv S
 
-NP -> N | Det NP
-NP -> Adj NP
+NP -> N | Det NP | Det N
+NP -> Adj N
 
 VP -> V | V NP
 VP -> Adv VP | VP Adv
 VP -> VP PP
 
-PP -> P | NP PP | PP NP
-
+PP -> P | P N | NP PP
+PP -> PP Det N | PP Det Adj NP | PP Det NP
 """
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -66,6 +66,8 @@ def main():
     for tree in trees:
         tree.pretty_print()
 
+        print(np_chunk(tree))
+        print(f"Total NP chunks: {len(np_chunk(tree))}")
     #     print("Noun Phrase Chunks")
     #     for np in np_chunk(tree):
     #         print(" ".join(np.flatten()))
@@ -90,7 +92,10 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    raise NotImplementedError
+    all_subtrees = list(tree.subtrees(lambda t: t.label() == "NP"))
+    np_chunks = [tree for tree in all_subtrees if len(tree) == 1]
+
+    return np_chunks
 
 
 if __name__ == "__main__":
