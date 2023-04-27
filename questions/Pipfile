@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 nltk = "*"
-submit50 = "*"
 
 [dev-packages]
 autopep8 = "*"

@@ -19,19 +19,19 @@ V -> "smiled" | "tell" | "were"
 # Modify these for solution
 NONTERMINALS = """
 S -> NP VP
+S -> NP VP PP | PP NP VP
 S -> S Conj S
 S -> S Conj VP
 S -> S Adv | Adv S
 
-NP -> N | Det NP | Det N
-NP -> Adj N
+NP -> N | Det N | Det Adj N | Det Adj NP
+NP -> Adj N | Adj NP
 
 VP -> V | V NP
 VP -> Adv VP | VP Adv
 VP -> VP PP
 
-PP -> P | P N | NP PP
-PP -> PP Det N | PP Det Adj NP | PP Det NP
+PP -> P NP | P N
 """
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -65,12 +65,10 @@ def main():
     # Print each tree with noun phrase chunks
     for tree in trees:
         tree.pretty_print()
-
-        print(np_chunk(tree))
         print(f"Total NP chunks: {len(np_chunk(tree))}")
-    #     print("Noun Phrase Chunks")
-    #     for np in np_chunk(tree):
-    #         print(" ".join(np.flatten()))
+        print("Noun Phrase Chunks")
+        for np in np_chunk(tree):
+            print(" ".join(np.flatten()))
 
 
 def preprocess(sentence):
@@ -92,8 +90,15 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    all_subtrees = list(tree.subtrees(lambda t: t.label() == "NP"))
-    np_chunks = [tree for tree in all_subtrees if len(tree) == 1]
+
+    # Get all trees with NP root
+    np_subtrees = list(tree.subtrees(lambda t: t.label() == "NP"))
+    np_chunks = []
+
+    # Iterate through NP subtrees
+    for tree in np_subtrees:
+        if len(list(tree.subtrees(lambda t: t.label() == "NP"))) == 1:
+            np_chunks.append(tree)
 
     return np_chunks
 
