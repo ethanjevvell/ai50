@@ -196,7 +196,8 @@ class MinesweeperAI():
         self.knowledge.append(sentence)
 
         # Mark all cells have mines where len(cells) = count (i.e., {(1,2), (2,3)} = 2)
-        knowledge_copy = [copy.deepcopy(sentence) for sentence in self.knowledge]
+        knowledge_copy = [copy.deepcopy(sentence)
+                          for sentence in self.knowledge]
 
         for sentence in knowledge_copy:
             if sentence.count == len(sentence.cells):
@@ -204,30 +205,38 @@ class MinesweeperAI():
                     self.mark_mine(cell)
 
         # Mark all cells safe where sentence.count = 0
-        knowledge_copy = [copy.deepcopy(sentence) for sentence in self.knowledge]
+        knowledge_copy = [copy.deepcopy(sentence)
+                          for sentence in self.knowledge]
 
         for sentence in knowledge_copy:
             if sentence.count == 0:
                 for cell in sentence.cells:
                     self.mark_safe(cell)
 
-        # Create new sentences where s1 is subset of s2
+        # Create new sentences by combining sentences with overlapping cells
         newSentences = []
-        for s1 in self.knowledge:
-            for s2 in self.knowledge:
-                if s1.cells.issubset(s2.cells) and s1 != s2:
-                    newSentence = Sentence(
-                        s2.cells - s1.cells, s2.count - s1.count)
-                    newSentences.append(newSentence)
+        for i, s1 in enumerate(self.knowledge):
+            for j, s2 in enumerate(self.knowledge):
+                if i != j and s1.cells & s2.cells:
+                    if s1.cells.issubset(s2.cells):
+                        new_cells = s2.cells - s1.cells
+                        new_count = s2.count - s1.count
+                        newSentence = Sentence(new_cells, new_count)
+                        if newSentence not in self.knowledge and newSentence not in newSentences:
+                            newSentences.append(newSentence)
+                    elif s2.cells.issubset(s1.cells):
+                        new_cells = s1.cells - s2.cells
+                        new_count = s1.count - s2.count
+                        newSentence = Sentence(new_cells, new_count)
+                        if newSentence not in self.knowledge and newSentence not in newSentences:
+                            newSentences.append(newSentence)
 
         for new_sentence in newSentences:
-            if new_sentence not in self.knowledge:
-                self.knowledge.append(new_sentence)
-
+            self.knowledge.append(new_sentence)
         # To filter out any sentence.cells that = {}, if they somehow occur
-        knowledge_copy = [copy.deepcopy(sentence) for sentence in self.knowledge if sentence.cells]
+        knowledge_copy = [copy.deepcopy(sentence)
+                          for sentence in self.knowledge if sentence.cells]
         self.knowledge = knowledge_copy
-
 
     def make_safe_move(self):
         """
