@@ -54,7 +54,7 @@ def load_files(directory):
 
     for file in files:
         with open(os.path.join(directory, file), 'r', encoding='utf-8') as f:
-            content = f.read()
+            content = str(f.read())
             file_dict[file] = content
 
     return file_dict
@@ -71,21 +71,15 @@ def tokenize(document):
 
 
 def compute_idfs(documents):
-    """
-    Given a dictionary of `documents` that maps names of documents to a list
-    of words, return a dictionary that maps words to their IDF values.
-
-    Any word that appears in at least one of the documents should be in the
-    resulting dictionary.
-    """
 
     words = {}
     idfs = {}
 
     # Populate words dict with number of times each word occurs in corpus
     for document in documents:
-        for word in document:
-            if not words[word]:
+        for word in documents[document]:
+
+            if word not in words:
                 words[word] = 1
             else:
                 words[word] += 1
@@ -94,7 +88,7 @@ def compute_idfs(documents):
     for word in words:
         word_appearances = 0
         for document in documents:
-            if word in document:
+            if word in documents[document]:
                 word_appearances += 1
 
         idf = math.log(len(documents) / word_appearances)
@@ -104,24 +98,48 @@ def compute_idfs(documents):
 
 
 def top_files(query, files, idfs, n):
-    """
-    Given a `query` (a set of words), `files` (a dictionary mapping names of
-    files to a list of their words), and `idfs` (a dictionary mapping words
-    to their IDF values), return a list of the filenames of the the `n` top
-    files that match the query, ranked according to tf-idf.
-    """
-    raise NotImplementedError
+
+    tf_idf_scores = dict()
+
+    for file in files:
+        score = 0
+
+        for word in query:
+            if word in files[file]:
+
+                idf = idfs[word]
+                appearances_in_doc = files[file].count(word)
+                score += idf * appearances_in_doc
+
+        tf_idf_scores[file] = score
+
+    # Sort the key-value pairs by the value of the item; reverse=True achieves descending order
+    top_scores = dict(sorted(tf_idf_scores.items(),
+                      key=lambda item: item[1], reverse=True))
+
+    # Return the top n document names
+    return list(top_scores.keys())[:n]
 
 
 def top_sentences(query, sentences, idfs, n):
-    """
-    Given a `query` (a set of words), `sentences` (a dictionary mapping
-    sentences to a list of their words), and `idfs` (a dictionary mapping words
-    to their IDF values), return a list of the `n` top sentences that match
-    the query, ranked according to idf. If there are ties, preference should
-    be given to sentences that have a higher query term density.
-    """
-    raise NotImplementedError
+
+    scores = []
+
+    for sentence in sentences:
+        matching_word_score = sum(
+            idfs[word] for word in query if word in sentences[sentence])
+        query_term_density = sum(
+            1 for word in query if word in sentences[sentence]) / len(sentences[sentence])
+        scores.append((sentence, matching_word_score, query_term_density))
+
+    # The sort() function's default behavior is to sort the list in natural ascending order. When you provide a key, it temporarily applies that function to each value you specify and THEN applies the natural ascending order sort.
+    # x[1] and x[2] are the matching_word_score and query_term_density for each sentence. Our goal is to get the resulting list in descending order. Consider that the highest score in a list of scores will become the LOWEST score if we negate the score. This produces the descending order.
+    # If two sentences have the same value for -x[1], the sort() function then looks as the second value in the tuple -- the query_term_density.
+
+    scores.sort(key=lambda x: (-x[1], -x[2]))
+    top_n_sentences = [score[0] for score in scores[:n]]
+
+    return top_n_sentences
 
 
 if __name__ == "__main__":

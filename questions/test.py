@@ -61,12 +61,11 @@ def compute_idfs(documents):
     for word in words:
         word_appearances = 0
         for document in documents:
-            if word in document:
+            if word in documents[document]:
                 word_appearances += 1
 
         idf = math.log(len(documents) / word_appearances)
         idfs[word] = idf
-        print(idf)
 
     return idfs
 
